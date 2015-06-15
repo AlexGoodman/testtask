@@ -1,0 +1,5 @@
+name = TESTMODULE 
+description = The module for  sending email.
+core = 7.x
+version = 7.x-1.x-dev
+package = My moduls

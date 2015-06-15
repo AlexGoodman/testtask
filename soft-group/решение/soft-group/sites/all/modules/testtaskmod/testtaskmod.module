@@ -1,0 +1,74 @@
+<?php
+/**
+ * @file
+ * Contains base function for module.
+ */
+ 
+/**
+ * Implements hook_menu().
+ */
+function testtaskmod_menu() {
+	$items['testtaskmod/sendform'] = array(
+		'title' => 'The form for sending information on email',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('testtaskmod_sendform_form'),
+		'access callback' => TRUE,
+      );
+	return $items;
+}
+
+/**
+	The form for sending
+*/
+function testtaskmod_sendform_form($form, $form_state) {
+	$form = array();
+	$form['name'] = array(
+		'#title' => t('Your name'),
+		'#type' => 'textfield',
+		'#required' => TRUE,
+		);
+	$form['email'] = array(
+		'#title' => t('Your email'),
+		'#type' => 'textfield',
+		'#required' => TRUE,
+		);
+	$form['comment'] = array(
+		'#title' => t('Your comment'),
+		'#type' => 'textarea',
+		'#required' => FALSE,
+		);
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#value' => t('SEND!!!'),
+		);
+	return $form;
+}	
+	
+/**
+	Create submit function
+*/
+function testtaskmod_sendform_form_submit($form, &$form_state) {
+	drupal_mail('testtaskmod', 'my_email', $form_state['values']['email'], language_default(), array('name' => $form_state['values']['name'], 'comment' => $form_state['values']['comment'] ));
+}
+
+/**
+	Implements hook_mail()
+*/
+function testtaskmod_mail($key, &$message, $params) {
+  if ($key == 'my_email') {
+    $message['subject'] = t("Email for ").$params['name'];
+    $message['body'][] = $params['comment'];
+  }
+}
+
+/**
+	Implements email validation
+*/
+function testtaskmod_sendform_form_validate($form, &$form_state){
+	if (!valid_email_address($form_state['values']['email'])) {
+		form_set_error('email', t('That e-mail address is not valid.'));
+		return false;
+	}
+}
+	
+
