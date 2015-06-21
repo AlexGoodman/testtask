@@ -1,155 +1,85 @@
-var queryArr = {};
+var url = 'ajax.php';
 
 
-function lastImgSize(imgBlock){
-    var width = $(imgBlock).last().outerWidth();
-    var img = $(imgBlock).last().find('img');
-    if (img.outerWidth() < img.outerHeight()) {
-        img.css('width', width);
-    } else {
-        img.css('height', width);
+function jsCheck(){
+    if($('#page-reload').prop('checked')){
+        return true;
     }
+    return false;
 }
 
-function getNews(page, query){
-    $('#more-news').hide();
+function saveNote(){
+    $('#save-button').on('click', function(){
+        if(!jsCheck()){
+            return true;
+        }
 
-    var queryStr = '';
-    if(query){
-        queryStr = 'q=' + query + '&';
-    }
-
-    var url = 'http://api.nytimes.com/svc/search/v2/articlesearch.json?' +
-        queryStr +
-        'fq=source:("The New York Times")' +
-        '&page='+ page +
-        '&api-key=aa5105c5cdb2d525a157aea8b5bf690a:6:72254658';
-
-    $.get(url, '', function (data) {
-
-        var docs = data.response.docs;
-
-        console.log(docs);
-        for(var i in docs){
-            var string = '';
-            string += '<div class="previewBlock">';
-
-            if(
-                docs[i].multimedia.length > 1 &&
-                1 in docs[i].multimedia &&
-                'url' in docs[i].multimedia[1]
-            ){
-                var img = 'http://nytimes.com/'+ docs[i].multimedia[1]['url'];
-                string += '<div class="previewImg"><img src="'+ img +'"></div>';
-            } else{
-                string +=  '<div class="previewImg">' +
-                                '<div class="noImg">NO<br>Image</div></div>';
-                var img = false;
-            }
-
-            string += '<div class="newsLink" data-url="'+ docs[i].web_url+'"' +
-                            'data-img="'+ img +'">' + docs[i].snippet + '</div></div>';
-            $('#finish-line').before(string);
-
-            var count = $('.previewBlock').length;
-
-            if(count % 5 == 0 ){
-                $('.previewBlock').last().addClass('last5');
-            }
-            else if((count - 1) % 5 == 0){
-                $('.previewBlock').last().addClass('first5');
-            }
-
-            if(count % 3 == 0 ){
-                $('.previewBlock').last().addClass('last3');
-            }
-            else if((count - 1) % 3 == 0){
-                $('.previewBlock').last().addClass('first3');
-            }
-
-            $('.newsLink').last().on('click', function(){
-                showPopup();
-                $('#popup-title').html($(this).html());
-                $('#popup-body-content').html('');
-
-                if(!$('#top-menu').hasClass('mobileHidden')){
-                    toggleMobileMenu('#mobile-menu-toggle');
-                }
-                if(!$('#search-block').hasClass('mobileHidden')){
-                    toggleMobileSearch('#mobile-search-toggle');
-                }
-
-                var thisObj = $(this);
-                $.post('php/page.php', {'url' : thisObj.attr('data-url')}, function(data){
-                    if(thisObj.attr('data-img') != 'false') {
-                        $('#popup-body-content').append(
-                            '<div class="popupImgBlock"><img src="' + thisObj.attr('data-img') + '"></div>'
-                        );
-                        lastImgSize('.popupImgBlock');
+        var obj = $(this);
+        var id = $('#pKey').val();
+        var text = $('#text').val();
+        data = {
+            'text' : text,
+            'id': id,
+            'action': 'save'
+        };
+        if(text.trim()) {
+            $.post(url, data, function (data) {
+                if (id) {
+                    $('.note-text').each(function () {
+                        if ($(this).attr('data-id') == id) {
+                            $(this).html(text);
+                        }
+                    });
+                } else {
+                    var string = '';
+                    for (var i in data) {
+                        string += '<div class="row m-top">' +
+                        '<div class="col-lg-8 col-md-8 col-sm-8 col-xs-8 note-text" data-id="' +
+                        data[i]['id'] + '">' + data[i]['text'] + '</div>' +
+                        '<div class="col-lg-4 col-md-4 col-sm-4 col-xs-4" style="text-align: right">' +
+                        '<a href="index.php?action=edit&id=' + data[i]['id'] + '" ' +
+                        'class="btn btn-primary edit-button" data-id="' + data[i]['id'] + '">Edit</a> ' +
+                        '<a href="index.php?action=delete&id=' + data[i]['id'] + '" ' +
+                        'class="btn btn-danger delete-button" data-id="' + data[i]['id'] + '">Delete</a>' +
+                        '</div></div>';
                     }
+                    $('#notes').html(string);
+                    deleteNote();
+                    editNote();
+                }
 
-                    $('#popup-body-content').append(data);
-                }, 'json');
-            });
-
-            if(img) {
-                lastImgSize('.previewBlock');
-            }
+                $('#text').val('');
+                $('#pKey').val('');
+            }, 'json');
         }
-
-        queryArr = data.response.meta;
-        queryArr.query = query;
-
-        if(queryArr.hits - (queryArr.offset + 10) > 0 ){
-            $('#more-news').show();
-        }
-    }, 'json');
-}
-
-function getQuery(){
-    $('#search-button').on('click', function(){
-        hidePopup();
-        $('.previewBlock').remove();
-        var query = $('#search-input').val();
-        getNews(0, query);
+        return false;
     });
 }
 
-function moreNews(){
-    $('#more-news').on('click', function(){
-        hidePopup();
-        getNews(queryArr.offset / 10 + 1, queryArr.query);
+function editNote(){
+    $('.edit-button').on('click', function(){
+        if(!jsCheck()){
+            return true;
+        }
+        $('#text').val($(this).closest('.row').children('.note-text').html().trim());
+        $('#pKey').val($(this).attr('data-id'));
+        $(document).scrollTop(0);
+        return false;
     });
 }
 
-function toggleMobileSearch(clickObj){
-    $('#search-block').toggleClass('mobileHidden');
-    $(clickObj).find('.sprite')
-        .toggleClass('sprite-search_mobile')
-        .toggleClass('sprite-search_mobile_2x');
-}
+function deleteNote(){
+    $('.delete-button').on('click', function(){
+        if(!jsCheck()){
+            return true;
+        }
 
-function toggleMobileMenu(clickObj){
-    $('#top-menu').toggleClass('mobileHidden');
-    $(clickObj).find('.sprite')
-        .toggleClass('sprite-burger_menu')
-        .toggleClass('sprite-burger_menu_2x');
-}
-
-function hideObj(obj){
-    $(obj).addClass('hidden');
-}
-
-function showObj(obj){
-    $(obj).removeClass('hidden');
-}
-
-function hidePopup(){
-    hideObj('#popup');
-    $('body').removeClass('noScroll');
-}
-
-function showPopup(){
-    showObj('#popup');
-    $('body').addClass('noScroll');
+        data = {
+            'id':$(this).attr('data-id'),
+            'action': 'delete'
+        };
+        $.post(url, data, function(){}, 'json');
+        $(this).closest('.row').remove();
+        return false;
+    });
 }
