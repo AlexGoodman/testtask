@@ -1,10 +1,90 @@
 <!DOCTYPE html>
 <html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title></title>
-</head>
-<body>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>JavaScript (JQuery)</title>
+        <style>
+            h1{
+                transition: 2s;
+                margin:50px;
+                text-align: center;
+                font-size: 100px;
+            }
 
-</body>
+            .c1{
+                color: red;
+
+            }
+            .c2{
+                color: orange;
+
+            }
+            .c3{
+                color: #ffff00;
+
+            }
+            .c4{
+                color: #008000;
+
+            }
+            .c5{
+                color: #0000ff;
+
+            }
+            .c6{
+                color: #000080;
+
+            }
+            .c7{
+                color: purple;
+            }
+        </style>
+        <script src="jquery.js"></script>
+    </head>
+    <body>
+        <h1 id="textID">
+            Hello World!!!
+        </h1>
+
+        <script>
+            function ChangeClasses(id, classes){
+                this.obj = $('#'+id);
+                this.classes = classes;
+                this.targetClass = 0;
+                this.quantityClasses = this.classes.length;
+                this.currentDirection = null;
+            }
+
+            Object.defineProperty(ChangeClasses.prototype, 'newDirection',
+                {
+                    get : function(){
+                        if(this.targetClass === 0) this.currentDirection = 'right';
+                        if(this.targetClass === (this.quantityClasses - 1)) this.currentDirection = 'left';
+                        return this.currentDirection;
+                    }
+                });
+
+            ChangeClasses.prototype.changingClasses = function(){
+                this.obj.addClass(this.classes[this.targetClass]);
+                if(this.targetClass === 0 || this.currentDirection === 'left') {
+                    this.obj.removeClass(this.classes[this.targetClass + 1]);
+                }
+
+                if(this.targetClass === (this.quantityClasses - 1) || this.currentDirection=== 'right') {
+                    this.obj.removeClass(this.classes[this.targetClass - 1]);
+                }
+
+                if(this.newDirection === 'right'){
+                    this.targetClass ++;
+                } else{
+                    this.targetClass --;
+                }
+            }
+
+            var classes = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'];
+            var myTextColor = new ChangeClasses('textID', classes);
+            myTextColor.changingClasses();
+            setInterval(function(){myTextColor.changingClasses()}, 4000);
+        </script>
+    </body>
 </html>
